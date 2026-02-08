@@ -7,19 +7,40 @@ const { errorHandler, notFoundHandler, requestLogger } = require('./middleware/e
 
 // Crear aplicación Express
 const app = express();
-const PORT = process.env.API_PORT || 5000;
+
+// Puerto: Render asigna PORT automáticamente, fallback a 5000 para desarrollo
+const PORT = process.env.PORT || process.env.API_PORT || 5000;
 
 // ============================================================================
 // MIDDLEWARE
 // ============================================================================
 
-// CORS - Permitir requests desde el frontend
+// CORS - Configuración flexible para desarrollo y producción
+const allowedOrigins = [
+  'http://localhost:5173',  // Vite dev server
+  'http://localhost:4173',  // Vite preview
+  'http://localhost:3000',  // Otros frontends locales
+  process.env.FRONTEND_URL, // URL del frontend en producción (configurar en Render)
+].filter(Boolean); // Eliminar valores undefined
+
 app.use(cors({
-  origin: [
-    'http://localhost:5173',  // Vite dev server
-    'http://localhost:4173',  // Vite preview
-    'http://localhost:3000',  // Otros frontends
-  ],
+  origin: (origin, callback) => {
+    // Permitir requests sin origin (como Postman, curl, apps móviles)
+    if (!origin) return callback(null, true);
+    
+    // En desarrollo, permitir cualquier localhost
+    if (process.env.NODE_ENV !== 'production' && origin.includes('localhost')) {
+      return callback(null, true);
+    }
+    
+    // Verificar si el origin está en la lista permitida
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // Rechazar otros orígenes
+    callback(new Error('Not allowed by CORS'));
+  },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -77,14 +98,22 @@ const startServer = async () => {
     }
 
     // Iniciar servidor
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log('');
       console.log('='.repeat(60));
       console.log('🚀 COMWARE API - Sistema de Gestión de Riesgos');
       console.log('='.repeat(60));
-      console.log(`📡 Servidor corriendo en: http://localhost:${PORT}`);
-      console.log(`📋 Documentación API:     http://localhost:${PORT}/api`);
-      console.log(`💚 Health Check:          http://localhost:${PORT}/api/health`);
+      console.log(`🌍 Entorno:               ${process.env.NODE_ENV || 'development'}`);
+      console.log(`📡 Puerto:                ${PORT}`);
+      
+      if (process.env.RENDER) {
+        console.log(`🔗 URL Pública:           ${process.env.RENDER_EXTERNAL_URL || 'Configurando...'}`);
+      } else {
+        console.log(`📡 Servidor local:        http://localhost:${PORT}`);
+      }
+      
+      console.log(`📋 Documentación API:     /api`);
+      console.log(`💚 Health Check:          /api/health`);
       console.log('='.repeat(60));
       console.log('');
       console.log('Endpoints principales:');
@@ -93,7 +122,9 @@ const startServer = async () => {
       console.log('  - GET  /api/evaluaciones-riesgo');
       console.log('  - GET  /api/catalogos/tipos-riesgo');
       console.log('');
-      console.log('Presiona Ctrl+C para detener el servidor');
+      if (!process.env.RENDER) {
+        console.log('Presiona Ctrl+C para detener el servidor');
+      }
       console.log('');
     });
   } catch (error) {

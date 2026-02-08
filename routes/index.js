@@ -12,6 +12,8 @@ const workflowRoutes = require('./workflow.routes');
 const usuariosRoutes = require('./usuarios.routes');
 const authRoutes = require('./auth.routes');
 const adminRoutes = require('./admin.routes');
+const catalogosExtendedRoutes = require('./catalogos-extended.routes');
+const encuestasRoutes = require('./encuestas.routes');
 
 
 // ============================================================================
@@ -103,6 +105,22 @@ router.get('/', (req, res) => {
         tareas: '/api/workflow/tareas',
         observacionesProceso: '/api/workflow/observaciones-proceso',
         historialCambios: '/api/workflow/historial-cambios'
+      },
+      catalogosExtendidos: {
+        cargos: '/api/catalogos/cargos',
+        vicepresidencias: '/api/catalogos/vicepresidencias',
+        gerencias: '/api/catalogos/gerencias',
+        tiposProceso: '/api/catalogos/tipos-proceso',
+        consecuencias: '/api/catalogos/consecuencias',
+        descripcionesImpacto: '/api/catalogos/descripciones-impacto',
+        formulas: '/api/catalogos/formulas',
+        tipologias: '/api/catalogos/tipologias',
+        categoriasTipologia: '/api/catalogos/categorias-tipologia'
+      },
+      encuestas: {
+        base: '/api/encuestas',
+        preguntas: '/api/encuestas/:encuestaId/preguntas',
+        reordenar: 'PUT /api/encuestas/:encuestaId/preguntas/reordenar'
       }
     },
     documentation: 'Usa Postman para probar los endpoints. Todos soportan GET, POST, PUT, PATCH, DELETE',
@@ -131,6 +149,12 @@ router.use('/admin', adminRoutes);
 
 // Catálogos: /api/catalogos/*
 router.use('/catalogos', catalogosRoutes);
+
+// Catálogos Extendidos: /api/catalogos/*
+router.use('/catalogos', catalogosExtendedRoutes);
+
+// Encuestas: /api/encuestas/*
+router.use('/encuestas', encuestasRoutes);
 
 // Principales: /api/areas, /api/personas, /api/procesos
 router.use('/', procesosRoutes);
