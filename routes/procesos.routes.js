@@ -29,17 +29,10 @@ router.delete('/personas/:id', personasController.delete);
 
 // ============================================================================
 // RUTAS: procesos
+// IMPORTANTE: Las rutas especificas (bulk) deben ir ANTES de las rutas con parametros (:id)
 // ============================================================================
-router.get('/procesos', procesosController.getAll);
-router.get('/procesos/:id', procesosController.getById);
-router.post('/procesos', procesosController.create);
-router.put('/procesos/:id', procesosController.update);
-router.patch('/procesos/:id', procesosController.patch);
-router.delete('/procesos/:id', procesosController.delete);
 
-// ============================================================================
-// RUTA ESPECIAL: Actualización masiva de procesos
-// ============================================================================
+// RUTA ESPECIAL: Actualizacion masiva de procesos (DEBE IR PRIMERO)
 router.put('/procesos/bulk', async (req, res) => {
   const { query } = require('../config/database');
   
@@ -62,12 +55,12 @@ router.put('/procesos/bulk', async (req, res) => {
           throw new Error('Cada proceso debe tener un ID');
         }
         
-        // Construir la actualización solo con los campos proporcionados
+        // Construir la actualizacion solo con los campos proporcionados
         const updateFields = [];
         const values = [];
         let paramIndex = 1;
         
-        // Campos permitidos para actualización
+        // Campos permitidos para actualizacion
         const allowedFields = [
           'nombre_proceso', 'descripcion', 'tipo_proceso', 'objetivo',
           'vicepresidencia', 'gerencia', 'subdivision',
@@ -91,7 +84,7 @@ router.put('/procesos/bulk', async (req, res) => {
           continue; // Skip if no fields to update
         }
         
-        // Agregar fecha de actualización
+        // Agregar fecha de actualizacion
         updateFields.push(`fecha_actualizacion = CURRENT_TIMESTAMP`);
         
         // Agregar ID al final
@@ -133,5 +126,13 @@ router.put('/procesos/bulk', async (req, res) => {
     });
   }
 });
+
+// Rutas CRUD estandar (DEBEN IR DESPUES de /bulk)
+router.get('/procesos', procesosController.getAll);
+router.get('/procesos/:id', procesosController.getById);
+router.post('/procesos', procesosController.create);
+router.put('/procesos/:id', procesosController.update);
+router.patch('/procesos/:id', procesosController.patch);
+router.delete('/procesos/:id', procesosController.delete);
 
 module.exports = router;
