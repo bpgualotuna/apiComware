@@ -20,6 +20,7 @@ const allowedOrigins = [
   'http://localhost:5173',  // Vite dev server
   'http://localhost:4173',  // Vite preview
   'http://localhost:3000',  // Otros frontends locales
+  'https://gestion-riesgos-app.onrender.com', // Frontend en Render
   process.env.FRONTEND_URL, // URL del frontend en producción (configurar en Render)
 ].filter(Boolean); // Eliminar valores undefined
 
