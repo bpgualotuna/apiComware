@@ -81,4 +81,15 @@ router.put('/atributos-control/:id', atributosControlController.update);
 router.patch('/atributos-control/:id', atributosControlController.patch);
 router.delete('/atributos-control/:id', atributosControlController.delete);
 
+// ============================================================================
+// RUTAS: niveles-riesgo
+// ============================================================================
+const nivelesRiesgoController = createCrudController('niveles_riesgo');
+router.get('/niveles-riesgo', nivelesRiesgoController.getAll);
+router.get('/niveles-riesgo/:id', nivelesRiesgoController.getById);
+router.post('/niveles-riesgo', nivelesRiesgoController.create);
+router.put('/niveles-riesgo/:id', nivelesRiesgoController.update);
+router.patch('/niveles-riesgo/:id', nivelesRiesgoController.patch);
+router.delete('/niveles-riesgo/:id', nivelesRiesgoController.delete);
+
 module.exports = router;

@@ -37,4 +37,101 @@ router.put('/procesos/:id', procesosController.update);
 router.patch('/procesos/:id', procesosController.patch);
 router.delete('/procesos/:id', procesosController.delete);
 
+// ============================================================================
+// RUTA ESPECIAL: Actualización masiva de procesos
+// ============================================================================
+router.put('/procesos/bulk', async (req, res) => {
+  const { query } = require('../config/database');
+  
+  try {
+    const procesos = req.body;
+    
+    if (!Array.isArray(procesos) || procesos.length === 0) {
+      return res.status(400).json({ error: 'Se requiere un array de procesos' });
+    }
+
+    const client = await require('../config/database').pool.connect();
+    
+    try {
+      await client.query('BEGIN');
+      
+      const updatedProcesos = [];
+      
+      for (const proceso of procesos) {
+        if (!proceso.id) {
+          throw new Error('Cada proceso debe tener un ID');
+        }
+        
+        // Construir la actualización solo con los campos proporcionados
+        const updateFields = [];
+        const values = [];
+        let paramIndex = 1;
+        
+        // Campos permitidos para actualización
+        const allowedFields = [
+          'nombre_proceso', 'descripcion', 'tipo_proceso', 'objetivo',
+          'vicepresidencia', 'gerencia', 'subdivision',
+          'id_responsable', 'responsable', 'responsable_id', 'responsable_nombre',
+          'area_id', 'area_nombre',
+          'director_id', 'director_nombre',
+          'estado', 'version', 'aprobador',
+          'gerente_id', 'gerente_nombre',
+          'activo'
+        ];
+        
+        for (const field of allowedFields) {
+          if (proceso[field] !== undefined) {
+            updateFields.push(`${field} = $${paramIndex}`);
+            values.push(proceso[field]);
+            paramIndex++;
+          }
+        }
+        
+        if (updateFields.length === 0) {
+          continue; // Skip if no fields to update
+        }
+        
+        // Agregar fecha de actualización
+        updateFields.push(`fecha_actualizacion = CURRENT_TIMESTAMP`);
+        
+        // Agregar ID al final
+        values.push(proceso.id);
+        
+        const sql = `
+          UPDATE procesos
+          SET ${updateFields.join(', ')}
+          WHERE id = $${paramIndex}
+          RETURNING *
+        `;
+        
+        const result = await client.query(sql, values);
+        
+        if (result.rows.length > 0) {
+          updatedProcesos.push(result.rows[0]);
+        }
+      }
+      
+      await client.query('COMMIT');
+      
+      res.json({
+        message: `${updatedProcesos.length} procesos actualizados exitosamente`,
+        data: updatedProcesos
+      });
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+    
+  } catch (error) {
+    console.error('Error en PUT /procesos/bulk:', error);
+    res.status(500).json({ 
+      error: 'Error al actualizar procesos en lote',
+      details: error.message 
+    });
+  }
+});
+
 module.exports = router;

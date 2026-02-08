@@ -70,4 +70,82 @@ router.put('/configuraciones/:id', configuracionesController.update);
 router.patch('/configuraciones/:id', configuracionesController.patch);
 router.delete('/configuraciones/:id', configuracionesController.delete);
 
+// ============================================================================
+// RUTA ESPECIAL: Configuración de Mapas de Riesgo
+// ============================================================================
+router.put('/mapa-config', async (req, res) => {
+  const { query } = require('../config/database');
+  
+  try {
+    const { type, data } = req.body;
+    
+    if (!type || !['inherente', 'residual', 'tolerancia'].includes(type)) {
+      return res.status(400).json({ 
+        error: 'Se requiere un tipo válido: inherente, residual o tolerancia' 
+      });
+    }
+    
+    if (!data) {
+      return res.status(400).json({ error: 'Se requieren datos para actualizar' });
+    }
+    
+    // Buscar la configuración existente
+    const checkResult = await query(
+      `SELECT * FROM configuraciones WHERE clave = $1`,
+      ['mapa_config']
+    );
+    
+    let currentConfig = {
+      inherente: {},
+      residual: {},
+      tolerancia: []
+    };
+    
+    if (checkResult.rows.length > 0) {
+      try {
+        currentConfig = JSON.parse(checkResult.rows[0].valor);
+      } catch (e) {
+        console.error('Error parsing existing config:', e);
+      }
+    }
+    
+    // Actualizar solo el tipo especificado
+    currentConfig[type] = data;
+    
+    const newValue = JSON.stringify(currentConfig);
+    
+    let result;
+    if (checkResult.rows.length > 0) {
+      // Actualizar existente
+      result = await query(
+        `UPDATE configuraciones 
+         SET valor = $1, fecha_actualizacion = CURRENT_TIMESTAMP 
+         WHERE clave = $2 
+         RETURNING *`,
+        [newValue, 'mapa_config']
+      );
+    } else {
+      // Crear nuevo
+      result = await query(
+        `INSERT INTO configuraciones (clave, valor, tipo, descripcion) 
+         VALUES ($1, $2, $3, $4) 
+         RETURNING *`,
+        ['mapa_config', newValue, 'json', 'Configuración de mapas de riesgo']
+      );
+    }
+    
+    res.json({
+      message: 'Configuración de mapa actualizada exitosamente',
+      data: JSON.parse(result.rows[0].valor)
+    });
+    
+  } catch (error) {
+    console.error('Error en PUT /mapa-config:', error);
+    res.status(500).json({ 
+      error: 'Error al actualizar configuración de mapa',
+      details: error.message 
+    });
+  }
+});
+
 module.exports = router;
