@@ -161,10 +161,55 @@ const createCrudController = (tableName, options = {}) => {
         // Remover campos que no deben ser actualizados
         delete data.id;
         delete data.created_at;
-        data.updated_at = new Date();
         
-        const fields = Object.keys(data);
-        const values = Object.values(data);
+        // Obtener las columnas válidas de la tabla
+        const columnsResult = await query(`
+          SELECT column_name 
+          FROM information_schema.columns 
+          WHERE table_name = $1
+        `, [tableName]);
+        
+        const validColumns = columnsResult.rows.map(row => row.column_name);
+        
+        // Filtrar solo los campos que existen en la tabla
+        const filteredData = {};
+        for (const [key, value] of Object.entries(data)) {
+          // Convertir camelCase a snake_case para comparar
+          const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+          if (validColumns.includes(key) || validColumns.includes(snakeKey)) {
+            // Usar snake_case si existe, sino usar la key original
+            const finalKey = validColumns.includes(snakeKey) ? snakeKey : key;
+            filteredData[finalKey] = value;
+          }
+        }
+        
+        // Añadir updated_at
+        if (validColumns.includes('updated_at')) {
+          filteredData.updated_at = new Date();
+        }
+        
+        // Si no hay campos válidos para actualizar, retornar el registro existente
+        if (Object.keys(filteredData).length === 0) {
+          const result = await query(
+            `SELECT * FROM ${tableName} WHERE ${idField} = $1`,
+            [id]
+          );
+          if (result.rows.length === 0) {
+            return res.status(404).json({
+              success: false,
+              error: 'No encontrado',
+              message: `No se encontró el registro con ID: ${id}`
+            });
+          }
+          return res.json({
+            success: true,
+            message: 'Sin cambios - ningún campo válido proporcionado',
+            data: result.rows[0]
+          });
+        }
+        
+        const fields = Object.keys(filteredData);
+        const values = Object.values(filteredData);
         const setClause = fields.map((field, i) => `${field} = $${i + 1}`).join(', ');
         
         const result = await query(
