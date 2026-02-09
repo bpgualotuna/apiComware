@@ -1,174 +1,118 @@
+/**
+ * Router Principal - API de Gestión de Riesgos
+ */
+
 const express = require('express');
 const router = express.Router();
-const { testConnection } = require('../config/database');
 
 // Importar rutas
-const catalogosRoutes = require('./catalogos.routes');
 const procesosRoutes = require('./procesos.routes');
 const riesgosRoutes = require('./riesgos.routes');
 const evaluacionesRoutes = require('./evaluaciones.routes');
-const configuracionRoutes = require('./configuracion.routes');
-const workflowRoutes = require('./workflow.routes');
+const controlesRoutes = require('./controles.routes');
+const planesAccionRoutes = require('./planesAccion.routes');
+const catalogosRoutes = require('./catalogos.routes');
 const usuariosRoutes = require('./usuarios.routes');
-const authRoutes = require('./auth.routes');
-const adminRoutes = require('./admin.routes');
-const catalogosExtendedRoutes = require('./catalogos-extended.routes');
-const encuestasRoutes = require('./encuestas.routes');
+const rolesRoutes = require('./roles.routes');
 
-
-// ============================================================================
-// RUTA: Health Check
-// ============================================================================
-router.get('/health', async (req, res) => {
-  try {
-    const dbConnected = await testConnection();
-    res.json({
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      database: dbConnected ? 'connected' : 'disconnected',
-      version: '1.0.0'
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      database: 'disconnected',
-      error: error.message
-    });
-  }
+// Health check
+router.get('/health', (req, res) => {
+  res.json({
+    success: true,
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    version: '2.0.0'
+  });
 });
 
-// ============================================================================
-// RUTA: Información de la API
-// ============================================================================
+// Documentación de la API
 router.get('/', (req, res) => {
   res.json({
-    name: 'COMWARE API - Sistema de Gestión de Riesgos',
-    version: '1.0.0',
+    success: true,
+    message: 'COMWARE API - Sistema de Gestión de Riesgos',
+    version: '2.0.0',
     endpoints: {
       health: 'GET /api/health',
-      auth: {
-        login: 'POST /api/auth/login',
-        logout: 'POST /api/auth/logout',
-        me: 'GET /api/auth/me'
-      },
-      usuarios: {
-        listar: 'GET /api/usuarios',
-        crear: 'POST /api/usuarios',
-        obtener: 'GET /api/usuarios/:id',
-        actualizar: 'PUT /api/usuarios/:id',
-        cambiarPassword: 'PATCH /api/usuarios/:id/password',
-        toggleActivo: 'PATCH /api/usuarios/:id/toggle',
-        eliminar: 'DELETE /api/usuarios/:id'
-      },
-      admin: {
-        roles: 'GET /api/admin/roles',
-        gerentesPorArea: 'GET /api/admin/areas/:areaId/gerentes',
-        asignarGerente: 'POST /api/admin/areas/:areaId/gerentes',
-        removerGerente: 'DELETE /api/admin/areas/:areaId/gerentes/:usuarioId',
-        areasPorGerente: 'GET /api/admin/usuarios/:usuarioId/areas'
-      },
-      catalogos: {
-        origenesRiesgo: '/api/catalogos/origenes-riesgo',
-        tiposRiesgo: '/api/catalogos/tipos-riesgo',
-        fuentesCausa: '/api/catalogos/fuentes-causa',
-        frecuencias: '/api/catalogos/frecuencias',
-        nivelesImpacto: '/api/catalogos/niveles-impacto',
-        objetivos: '/api/catalogos/objetivos',
-        atributosControl: '/api/catalogos/atributos-control'
-      },
-      principales: {
-        areas: '/api/areas',
-        personas: '/api/personas',
-        procesos: '/api/procesos'
+      procesos: {
+        getAll: 'GET /api/procesos',
+        getById: 'GET /api/procesos/:id',
+        create: 'POST /api/procesos',
+        update: 'PUT /api/procesos/:id',
+        delete: 'DELETE /api/procesos/:id',
+        stats: 'GET /api/procesos/:id/estadisticas'
       },
       riesgos: {
-        riesgos: '/api/riesgos',
-        causas: '/api/causas',
-        controlesRiesgo: '/api/controles-riesgo'
+        getAll: 'GET /api/riesgos',
+        getById: 'GET /api/riesgos/:id',
+        create: 'POST /api/riesgos',
+        update: 'PUT /api/riesgos/:id',
+        delete: 'DELETE /api/riesgos/:id',
+        byProceso: 'GET /api/riesgos/proceso/:procesoId',
+        stats: 'GET /api/riesgos/estadisticas',
+        mapa: 'GET /api/riesgos/mapa'
       },
       evaluaciones: {
-        evaluacionesRiesgo: '/api/evaluaciones-riesgo',
-        priorizaciones: '/api/priorizaciones',
-        planesAccion: '/api/planes-accion',
-        accionesPlan: '/api/acciones-plan'
+        getAll: 'GET /api/evaluaciones',
+        getById: 'GET /api/evaluaciones/:id',
+        create: 'POST /api/evaluaciones',
+        update: 'PUT /api/evaluaciones/:id',
+        delete: 'DELETE /api/evaluaciones/:id',
+        byRiesgo: 'GET /api/evaluaciones/riesgo/:riesgoId'
       },
-      configuracion: {
-        pasosProceso: '/api/configuracion/pasos-proceso',
-        listasValores: '/api/configuracion/listas-valores',
-        valoresLista: '/api/configuracion/valores-lista',
-        parametrosValoracion: '/api/configuracion/parametros-valoracion',
-        valoresParametro: '/api/configuracion/valores-parametro',
-        configuraciones: '/api/configuracion/configuraciones'
+      controles: {
+        getAll: 'GET /api/controles',
+        getById: 'GET /api/controles/:id',
+        create: 'POST /api/controles',
+        update: 'PUT /api/controles/:id',
+        delete: 'DELETE /api/controles/:id',
+        byRiesgo: 'GET /api/controles/riesgo/:riesgoId'
       },
-      workflow: {
-        notificaciones: '/api/workflow/notificaciones',
-        tareas: '/api/workflow/tareas',
-        observacionesProceso: '/api/workflow/observaciones-proceso',
-        historialCambios: '/api/workflow/historial-cambios'
+      planesAccion: {
+        getAll: 'GET /api/planes-accion',
+        getById: 'GET /api/planes-accion/:id',
+        create: 'POST /api/planes-accion',
+        update: 'PUT /api/planes-accion/:id',
+        delete: 'DELETE /api/planes-accion/:id',
+        tareas: 'GET /api/planes-accion/:planId/tareas'
       },
-      catalogosExtendidos: {
-        cargos: '/api/catalogos/cargos',
-        vicepresidencias: '/api/catalogos/vicepresidencias',
-        gerencias: '/api/catalogos/gerencias',
-        tiposProceso: '/api/catalogos/tipos-proceso',
-        consecuencias: '/api/catalogos/consecuencias',
-        descripcionesImpacto: '/api/catalogos/descripciones-impacto',
-        formulas: '/api/catalogos/formulas',
-        tipologias: '/api/catalogos/tipologias',
-        categoriasTipologia: '/api/catalogos/categorias-tipologia'
+      catalogos: {
+        all: 'GET /api/catalogos',
+        nivelesRiesgo: 'GET /api/catalogos/niveles-riesgo',
+        tipologias: 'GET /api/catalogos/tipologias',
+        clasificaciones: 'GET /api/catalogos/clasificaciones-riesgo',
+        respuestas: 'GET /api/catalogos/respuestas-riesgo',
+        probabilidad: 'GET /api/catalogos/ejes-probabilidad',
+        impacto: 'GET /api/catalogos/ejes-impacto',
+        mapaConfig: 'GET /api/catalogos/mapa-configuracion',
+        tolerancia: 'GET /api/catalogos/mapa-tolerancia',
+        pasos: 'GET /api/catalogos/pasos-proceso'
       },
-      encuestas: {
-        base: '/api/encuestas',
-        preguntas: '/api/encuestas/:encuestaId/preguntas',
-        reordenar: 'PUT /api/encuestas/:encuestaId/preguntas/reordenar'
+      usuarios: {
+        getAll: 'GET /api/usuarios',
+        getById: 'GET /api/usuarios/:id',
+        create: 'POST /api/usuarios',
+        update: 'PUT /api/usuarios/:id',
+        delete: 'DELETE /api/usuarios/:id'
+      },
+      roles: {
+        getAll: 'GET /api/roles',
+        getById: 'GET /api/roles/:id',
+        create: 'POST /api/roles',
+        update: 'PUT /api/roles/:id',
+        delete: 'DELETE /api/roles/:id'
       }
-    },
-    documentation: 'Usa Postman para probar los endpoints. Todos soportan GET, POST, PUT, PATCH, DELETE',
-    examples: {
-      getAll: 'GET /api/procesos',
-      getById: 'GET /api/procesos/1',
-      create: 'POST /api/procesos { "codigo_proceso": "PRO-001", "nombre_proceso": "Test" }',
-      update: 'PUT /api/procesos/1 { "nombre_proceso": "Actualizado" }',
-      delete: 'DELETE /api/procesos/1'
     }
   });
 });
 
-// ============================================================================
-// MONTAR RUTAS
-// ============================================================================
-
-// Autenticación: /api/auth/*
-router.use('/auth', authRoutes);
-
-// Usuarios: /api/usuarios/*
-router.use('/usuarios', usuariosRoutes);
-
-// Administración: /api/admin/*
-router.use('/admin', adminRoutes);
-
-// Catálogos: /api/catalogos/*
+// Montar rutas
+router.use('/procesos', procesosRoutes);
+router.use('/riesgos', riesgosRoutes);
+router.use('/evaluaciones', evaluacionesRoutes);
+router.use('/controles', controlesRoutes);
+router.use('/planes-accion', planesAccionRoutes);
 router.use('/catalogos', catalogosRoutes);
-
-// Catálogos Extendidos: /api/catalogos/*
-router.use('/catalogos', catalogosExtendedRoutes);
-
-// Encuestas: /api/encuestas/*
-router.use('/encuestas', encuestasRoutes);
-
-// Principales: /api/areas, /api/personas, /api/procesos
-router.use('/', procesosRoutes);
-
-// Riesgos: /api/riesgos, /api/causas, /api/controles-riesgo
-router.use('/', riesgosRoutes);
-
-// Evaluaciones: /api/evaluaciones-riesgo, /api/priorizaciones, etc.
-router.use('/', evaluacionesRoutes);
-
-// Configuración: /api/configuracion/*
-router.use('/configuracion', configuracionRoutes);
-
-// Workflow: /api/workflow/*
-router.use('/workflow', workflowRoutes);
+router.use('/usuarios', usuariosRoutes);
+router.use('/roles', rolesRoutes);
 
 module.exports = router;

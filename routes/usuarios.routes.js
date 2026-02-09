@@ -1,30 +1,23 @@
+/**
+ * Rutas de Usuarios y Roles
+ */
+
 const express = require('express');
 const router = express.Router();
-const { usuariosController } = require('../controllers/usuariosController');
+const { usuariosController, rolesController } = require('../controllers/usuariosController');
 
-// ============================================================================
-// RUTAS: usuarios
-// ============================================================================
-
-// GET - Listar todos los usuarios
+// CRUD Usuarios
 router.get('/', usuariosController.getAll);
-
-// GET - Obtener usuario por ID
 router.get('/:id', usuariosController.getById);
-
-// POST - Crear nuevo usuario
 router.post('/', usuariosController.create);
-
-// PUT - Actualizar usuario
 router.put('/:id', usuariosController.update);
-
-// PATCH - Cambiar contraseña
-router.patch('/:id/password', usuariosController.cambiarPassword);
-
-// PATCH - Toggle activo/inactivo
-router.patch('/:id/toggle', usuariosController.toggleActivo);
-
-// DELETE - Eliminar usuario
 router.delete('/:id', usuariosController.delete);
+
+// Rutas de Roles (también se pueden acceder desde /api/roles)
+router.get('/roles', rolesController.getAll);
+router.get('/roles/:id', rolesController.getById);
+router.post('/roles', rolesController.create);
+router.put('/roles/:id', rolesController.update);
+router.delete('/roles/:id', rolesController.delete);
 
 module.exports = router;

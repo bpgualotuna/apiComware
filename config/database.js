@@ -7,16 +7,16 @@ const poolConfig = {
   port: process.env.DB_PORT || 5432,
   database: process.env.DB_NAME || 'comware',
   user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'bpg2000',
-  max: 20, // Máximo de conexiones en el pool
+  password: process.env.DB_PASSWORD || 'password',
+  max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 5000,
 };
 
-// Agregar SSL si está habilitado (requerido para Render y otros servicios cloud)
+// Agregar SSL si está habilitado
 if (process.env.DB_SSL === 'true') {
   poolConfig.ssl = {
-    rejectUnauthorized: false // Necesario para Render
+    rejectUnauthorized: false
   };
   console.log('🔒 SSL habilitado para conexión a PostgreSQL');
 }
@@ -29,7 +29,13 @@ const query = async (text, params) => {
   try {
     const result = await pool.query(text, params);
     const duration = Date.now() - start;
-    console.log('Query ejecutada:', { text: text.substring(0, 50), duration, rows: result.rowCount });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Query ejecutada:', { 
+        text: text.substring(0, 80) + (text.length > 80 ? '...' : ''), 
+        duration: `${duration}ms`, 
+        rows: result.rowCount 
+      });
+    }
     return result;
   } catch (error) {
     console.error('Error en query:', error.message);
@@ -37,11 +43,19 @@ const query = async (text, params) => {
   }
 };
 
+// Función para obtener una conexión del pool
+const getClient = async () => {
+  const client = await pool.connect();
+  return client;
+};
+
 // Función para verificar conexión
 const testConnection = async () => {
   try {
-    const result = await pool.query('SELECT NOW()');
-    console.log('✅ Conectado a PostgreSQL - Base de datos:', process.env.DB_NAME);
+    const result = await pool.query('SELECT NOW() as current_time, current_database() as db_name');
+    console.log('✅ Conectado a PostgreSQL');
+    console.log(`   Base de datos: ${result.rows[0].db_name}`);
+    console.log(`   Hora servidor: ${result.rows[0].current_time}`);
     return true;
   } catch (error) {
     console.error('❌ Error de conexión a PostgreSQL:', error.message);
@@ -52,5 +66,6 @@ const testConnection = async () => {
 module.exports = {
   pool,
   query,
+  getClient,
   testConnection
 };
