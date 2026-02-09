@@ -14,6 +14,7 @@ const planesAccionRoutes = require('./planesAccion.routes');
 const catalogosRoutes = require('./catalogos.routes');
 const usuariosRoutes = require('./usuarios.routes');
 const rolesRoutes = require('./roles.routes');
+const areasRoutes = require('./areas.routes');
 
 // Health check
 router.get('/health', (req, res) => {
@@ -114,5 +115,6 @@ router.use('/planes-accion', planesAccionRoutes);
 router.use('/catalogos', catalogosRoutes);
 router.use('/usuarios', usuariosRoutes);
 router.use('/roles', rolesRoutes);
+router.use('/areas', areasRoutes);
 
 module.exports = router;
