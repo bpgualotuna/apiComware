@@ -43,7 +43,8 @@ const remove = async (req, res, next) => {
 
 const duplicate = async (req, res, next) => {
   try {
-    const row = await procesosRepo.duplicate(req.params.id, req.body.overrides || {});
+    const overrides = req.body?.overrides ?? req.body ?? {};
+    const row = await procesosRepo.duplicate(req.params.id, overrides);
     if (!row) throw new ApiError('Proceso no encontrado', 404);
     res.status(201).json(mapRowToCamel(row));
   } catch (err) { next(err); }

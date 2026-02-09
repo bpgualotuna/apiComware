@@ -4,6 +4,7 @@ const router = express.Router();
 const procesosCtrl = require('../controllers/procesos.controller');
 const riesgosCtrl = require('../controllers/riesgos.controller');
 const catalogosCtrl = require('../controllers/catalogos.controller');
+const authCtrl = require('../controllers/auth.controller');
 const encuestasQueries = require('../database/encuestas.queries');
 const pasosQueries = require('../database/pasos.queries');
 const { mapRowToCamel, mapRowsToCamel } = require('../utils/mappers');
@@ -12,6 +13,10 @@ const { ApiError } = require('../middleware/errorHandler');
 
 // Health
 router.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+
+// ==================== AUTH ====================
+router.post('/auth/login', authCtrl.login);
+router.post('/auth/logout', authCtrl.logout);
 
 // ==================== PROCESOS ====================
 router.get('/procesos', procesosCtrl.list);
@@ -105,6 +110,8 @@ router.put('/preguntas-encuesta/:id', async (req, res, next) => {
 });
 router.delete('/preguntas-encuesta/:id', async (req, res, next) => {
   try {
+    const r = await query('SELECT id FROM preguntas_encuesta WHERE id = $1', [req.params.id]);
+    if (!r.rows[0]) throw new ApiError('Pregunta no encontrada', 404);
     await encuestasQueries.deletePregunta(req.params.id);
     res.status(204).send();
   } catch (err) { next(err); }

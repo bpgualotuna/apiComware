@@ -14,6 +14,15 @@ El frontend espera respuestas en **camelCase**. La API transforma automáticamen
 
 ---
 
+## Auth
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| POST | `/api/auth/login` | Iniciar sesión. Body: `{ username, password }` |
+| POST | `/api/auth/logout` | Cerrar sesión |
+
+---
+
 ## Procesos
 
 | Método | Ruta | Descripción |
