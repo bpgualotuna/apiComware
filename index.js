@@ -8,8 +8,8 @@ const { errorHandler, notFoundHandler, requestLogger } = require('./middleware/e
 // Crear aplicación Express
 const app = express();
 
-// Puerto: Render asigna PORT automáticamente, fallback a 5000 para desarrollo
-const PORT = process.env.PORT || process.env.API_PORT || 5000;
+// Puerto: Render asigna PORT automáticamente; 3001 coincide con VITE_API_BASE_URL del frontend
+const PORT = process.env.PORT || process.env.API_PORT || 3001;
 
 // ============================================================================
 // MIDDLEWARE
