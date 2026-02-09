@@ -7,6 +7,7 @@ const catalogosCtrl = require('../controllers/catalogos.controller');
 const authCtrl = require('../controllers/auth.controller');
 const encuestasQueries = require('../database/encuestas.queries');
 const pasosQueries = require('../database/pasos.queries');
+const asignacionesGerenteQueries = require('../database/asignacionesGerente.queries');
 const { mapRowToCamel, mapRowsToCamel } = require('../utils/mappers');
 const { query } = require('../config/database');
 const { ApiError } = require('../middleware/errorHandler');
@@ -358,6 +359,26 @@ router.put('/notificaciones/:id', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// ==================== ASIGNACIONES GERENTE GENERAL ====================
+router.get('/asignaciones-gerente', async (req, res, next) => {
+  try {
+    const usuarioId = req.query.usuarioId || req.query.usuario_id;
+    const modo = req.query.modo || 'director';
+    if (!usuarioId) throw new ApiError('Se requiere usuarioId', 400);
+    const result = await asignacionesGerenteQueries.getByUsuarioModo(usuarioId, modo);
+    res.json(result);
+  } catch (err) { next(err); }
+});
+router.put('/asignaciones-gerente', async (req, res, next) => {
+  try {
+    const { usuarioId, usuario_id, modo = 'director', areaIds = [], procesoIds = [] } = req.body || {};
+    const uid = usuarioId || usuario_id;
+    if (!uid) throw new ApiError('Se requiere usuarioId', 400);
+    const result = await asignacionesGerenteQueries.save(uid, modo, areaIds, procesoIds);
+    res.json(result);
+  } catch (err) { next(err); }
+});
+
 // ==================== AREAS Y USUARIOS (Admin) ====================
 router.get('/areas', async (req, res, next) => {
   try {
@@ -368,8 +389,13 @@ router.get('/areas', async (req, res, next) => {
 
 router.get('/usuarios', async (req, res, next) => {
   try {
-    const r = await query('SELECT id, nombre, role, email, activo, cargo_nombre, created_at, updated_at FROM usuarios ORDER BY nombre');
-    res.json(mapRowsToCamel(r.rows));
+    const r = await query('SELECT id, nombre, role, email, activo, cargo_nombre, cargo_id, created_at, updated_at FROM usuarios ORDER BY nombre');
+    const rows = r.rows.map((row) => {
+      const camel = mapRowToCamel(row);
+      if (camel.role === 'dueno_procesos') camel.role = 'dueño_procesos';
+      return camel;
+    });
+    res.json(rows);
   } catch (err) { next(err); }
 });
 

@@ -243,12 +243,21 @@ El frontend espera respuestas en **camelCase**. La API transforma automáticamen
 
 ---
 
+## Asignaciones Gerente General
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/api/asignaciones-gerente` | Obtener asignaciones. Query: `usuarioId`, `modo` (director/proceso) |
+| PUT | `/api/asignaciones-gerente` | Guardar asignaciones. Body: `{ usuarioId, modo, areaIds, procesoIds }` |
+
+---
+
 ## Áreas y Usuarios
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | GET | `/api/areas` | Listar áreas |
-| GET | `/api/usuarios` | Listar usuarios |
+| GET | `/api/usuarios` | Listar usuarios (role normalizado: dueno_procesos → dueño_procesos) |
 
 ---
 
