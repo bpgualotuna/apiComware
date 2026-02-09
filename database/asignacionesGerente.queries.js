@@ -8,8 +8,8 @@ const getByUsuarioModo = async (usuarioId, modo) => {
     [usuarioId, modo]
   );
   const rows = r.rows || [];
-  const areaIds = rows.filter((x) => x.tipo === 'area').map((x) => x.item_id).filter(Boolean);
-  const procesoIds = rows.filter((x) => x.tipo === 'proceso').map((x) => x.item_id).filter(Boolean);
+  const areaIds = rows.filter((x) => x.tipo === 'area').map((x) => String(x.item_id || '')).filter(Boolean);
+  const procesoIds = rows.filter((x) => x.tipo === 'proceso').map((x) => String(x.item_id || '')).filter(Boolean);
   return { areaIds, procesoIds };
 };
 

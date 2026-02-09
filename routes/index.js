@@ -21,12 +21,12 @@ router.post('/auth/logout', authCtrl.logout);
 
 // ==================== PROCESOS ====================
 router.get('/procesos', procesosCtrl.list);
+router.put('/procesos/bulk', procesosCtrl.bulkUpdate); // Debe ir ANTES de /:id para que "bulk" no se interprete como id
 router.get('/procesos/:id', procesosCtrl.getById);
 router.post('/procesos', procesosCtrl.create);
 router.put('/procesos/:id', procesosCtrl.update);
 router.delete('/procesos/:id', procesosCtrl.remove);
 router.post('/procesos/:id/duplicate', procesosCtrl.duplicate);
-router.put('/procesos/bulk', procesosCtrl.bulkUpdate);
 
 // ==================== RIESGOS ====================
 router.get('/riesgos', riesgosCtrl.list);
@@ -372,9 +372,11 @@ router.get('/asignaciones-gerente', async (req, res, next) => {
 router.put('/asignaciones-gerente', async (req, res, next) => {
   try {
     const { usuarioId, usuario_id, modo = 'director', areaIds = [], procesoIds = [] } = req.body || {};
-    const uid = usuarioId || usuario_id;
+    const uid = String(usuarioId || usuario_id || '').trim();
     if (!uid) throw new ApiError('Se requiere usuarioId', 400);
-    const result = await asignacionesGerenteQueries.save(uid, modo, areaIds, procesoIds);
+    const aIds = (Array.isArray(areaIds) ? areaIds : []).map((x) => String(x)).filter(Boolean);
+    const pIds = (Array.isArray(procesoIds) ? procesoIds : []).map((x) => String(x)).filter(Boolean);
+    const result = await asignacionesGerenteQueries.save(uid, modo, aIds, pIds);
     res.json(result);
   } catch (err) { next(err); }
 });
